@@ -4,6 +4,7 @@
   "description": "The api that powers the Crafters Castia Utils mod",
   "scripts": {
     "dev": "ts-node src/index.ts",
+    "generate": "prisma generate && prisma migrate deploy",
     "build": "tsc"
   },
   "keywords": [
