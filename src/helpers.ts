@@ -13,7 +13,9 @@ export const getPermissions = async (tokenId: number) => {
         },
         select: {
             readShops: true,
-            writeShops: true
+            writeShops: true,
+            readOffers: true,
+            writeOffers: true
         }
     })
 }

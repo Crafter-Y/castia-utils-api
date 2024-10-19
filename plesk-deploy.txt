@@ -1,0 +1,10 @@
+I host this litte API on a plesk server because it is literally free.
+But it is quite complicated to deploy changes.
+This note is just for me and contains links to the dashboard of my server, you won't be able to follow.
+
+1. Commit to github
+2. Pull from git: https://ae867.webhosting.systems/modules/git/index.php/domain/repositories?dom_id=1207&site_id=1627
+3. npm install here: https://ae867.webhosting.systems/modules/nodejs/index.php/domain/index?dom_id=1207&site_id=1627
+4. run "generate" in the same region
+5. run "build" in the same region
+6. click restart app

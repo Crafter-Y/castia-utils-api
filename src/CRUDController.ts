@@ -3,12 +3,13 @@ import { ValidatedRequest } from "./validate";
 import { error, success } from "./responses";
 import { PrismaPromise } from "@prisma/client";
 
-export abstract class CRUDController<T extends C, C> {
+export abstract class CRUDController<T, C, W> {
     router;
 
     constructor() {
         this.router = Router();
 
+        // get all
         this.router.get("/", async (req: ValidatedRequest, res) => {
             if (!await this.readAllowed(req.tokenId!)) {
                 return res.json(error("You are not allowed to read this ressource."))
@@ -17,6 +18,7 @@ export abstract class CRUDController<T extends C, C> {
             return res.json(success(await this.findAll()))
         })
 
+        // create
         this.router.put("/", async (req: ValidatedRequest, res) => {
             if (!await this.writeAllowed(req.tokenId!)) {
                 return res.json(error("You are not allowed to write to this ressource."))
@@ -56,10 +58,40 @@ export abstract class CRUDController<T extends C, C> {
             }
             return res.json(success())
         })
+
+        // update/create (upsert)
+        this.router.post("/", async (req: ValidatedRequest, res) => {
+            if (!await this.writeAllowed(req.tokenId!)) {
+                return res.json(error("You are not allowed to write to this ressource."))
+            }
+
+            // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
+            const { uniqueIdentifier, data }: { uniqueIdentifier: W, data: C } = req.body;
+
+            await this.upsert(uniqueIdentifier, data, req.tokenId!)
+
+            return res.json(success())
+        })
+
+        // delete
+        this.router.delete("/", async (req: ValidatedRequest, res) => {
+            if (!await this.writeAllowed(req.tokenId!)) {
+                return res.json(error("You are not allowed to write to this ressource."))
+            }
+
+            // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
+            const { uniqueIdentifier }: { uniqueIdentifier: W } = req.body;
+
+            await this.delete(uniqueIdentifier)
+
+            return res.json(success())
+        })
     }
 
     abstract findAll(): PrismaPromise<Partial<T>[]>;
     abstract readAllowed(tokenId: number): Promise<boolean>;
     abstract writeAllowed(tokenId: number): Promise<boolean>;
     abstract create(object: C, tokenId: number): Promise<void>;
+    abstract upsert(where: W, data: C, tokenId: number): Promise<void>;
+    abstract delete(where: W): Promise<void>;
 }

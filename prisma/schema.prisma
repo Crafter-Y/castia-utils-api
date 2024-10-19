@@ -12,8 +12,9 @@ model Token {
   token       String @unique @db.VarChar(255)
   description String
 
-  createdShops Shop[]
-  permissions  Permission?
+  createdShops  Shop[]
+  createdOffers Offer[]
+  permissions   Permission?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -28,6 +29,9 @@ model Permission {
 
   readShops  Boolean @default(true)
   writeShops Boolean @default(false)
+
+  readOffers  Boolean @default(true)
+  writeOffers Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -48,4 +52,29 @@ model Shop {
   updatedAt DateTime @updatedAt
 
   @@map("shop")
+}
+
+model Offer {
+  id Int @id @default(autoincrement())
+
+  shop      String  @db.VarChar(255)
+  x         Int
+  y         Int
+  z         Int
+  owner     String  @db.VarChar(32)
+  item      String  @db.VarChar(255)
+  display   String  @db.VarChar(512)
+  buyPrice  Float
+  sellPrice Float
+  empty     Boolean @default(false)
+  full      Boolean @default(false)
+
+  createdBy   Token? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([x, y, z])
+  @@map("offer")
 }
