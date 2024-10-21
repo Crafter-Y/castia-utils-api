@@ -1,6 +1,6 @@
 {
   "name": "castia-utils-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The api that powers the Crafters Castia Utils mod",
   "scripts": {
     "dev": "npm run generate && nodemon ./src/index.ts",
