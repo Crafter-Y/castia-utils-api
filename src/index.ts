@@ -4,6 +4,7 @@ import indexRoutes from "./routes/indexRoutes"
 import shopRoutes from "./routes/shopRoutes"
 import offerRoutes from "./routes/offerRoutes"
 import auctionRoutes from "./routes/auctionRoutes"
+import tooltipRoutes from "./routes/tooltipRoutes"
 import cors from "cors"
 
 const app = express()
@@ -15,6 +16,7 @@ app.use("/", indexRoutes);
 app.use("/shop", validateToken(), shopRoutes);
 app.use("/offer", validateToken(), offerRoutes);
 app.use("/auction", validateToken(), auctionRoutes);
+app.use("/tooltip", validateToken(), tooltipRoutes);
 
 app.listen(80, () =>
     console.log(`🚀 Server ready at: http://localhost (Dev only)`),
