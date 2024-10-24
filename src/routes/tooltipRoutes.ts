@@ -37,6 +37,9 @@ type AuctionFields = {
     medAuction: number | null,
     u25Auction: number | null,
     maxAuction: number | null,
+    lastAuctionUnix: number | null;
+    lastAuctionPrice: number | null;
+    lastAuctionAmount: number | null;
 }
 
 const calculateMedValues = (nums: number[]) => {
@@ -156,6 +159,9 @@ router.get("/", async (req: ValidatedRequest, res) => {
             medAuction: null,
             u25Auction: null,
             maxAuction: null,
+            lastAuctionUnix: null,
+            lastAuctionPrice: null,
+            lastAuctionAmount: null
         }
         const auction = meta.find(entry => entry.item == item && entry.type == $Enums.ItemLogType.AUCTION);
         if (auction) {
@@ -172,6 +178,21 @@ router.get("/", async (req: ValidatedRequest, res) => {
             const prices = priceResult.map(el => el.price / el.amount);
             const { med, l25, u25 } = calculateMedValues(prices);
 
+            const lastAuction = await prisma.itemPriceLog.findFirst({
+                where: {
+                    type: $Enums.ItemLogType.AUCTION,
+                    item
+                },
+                orderBy: {
+                    createdAt: "desc"
+                },
+                select: {
+                    price: true,
+                    amount: true,
+                    createdAt: true
+                }
+            })
+
             auctionFields = {
                 minAuction: Math.min(...prices),
                 l25Auction: l25,
@@ -179,6 +200,9 @@ router.get("/", async (req: ValidatedRequest, res) => {
                 medAuction: med,
                 u25Auction: u25,
                 maxAuction: Math.max(...prices),
+                lastAuctionUnix: lastAuction?.createdAt.getTime() ?? null,
+                lastAuctionPrice: lastAuction?.price ?? null,
+                lastAuctionAmount: lastAuction?.amount ?? null
             }
         }
 
