@@ -14,8 +14,10 @@ export const getPermissions = async (tokenId: number) => {
         select: {
             readShops: true,
             writeShops: true,
+            deleteShops: true,
             readOffers: true,
             writeOffers: true,
+            deleteOffers: true,
             readAuctions: true,
             writeAuctions: true
         }

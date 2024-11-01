@@ -9,6 +9,10 @@ import { error, success } from '../responses';
 const prisma = new PrismaClient()
 
 class OfferRoutes extends CRUDController<Offer, Prisma.OfferCreateInput, Prisma.OfferWhereUniqueInput> {
+    async deleteAllowed(tokenId: number): Promise<boolean> {
+        const res = await getPermissions(tokenId);
+        return res.deleteOffers;
+    }
     async delete(where: Prisma.OfferWhereUniqueInput): Promise<void> {
         await prisma.offer.delete({
             where

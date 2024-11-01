@@ -87,8 +87,8 @@ export abstract class CRUDController<T, C, W> {
 
         // delete
         this.router.delete("/", async (req: ValidatedRequest, res) => {
-            if (!await this.writeAllowed(req.tokenId!)) {
-                return res.json(error("You are not allowed to write to this ressource."))
+            if (!await this.deleteAllowed(req.tokenId!)) {
+                return res.json(error("You are not allowed to delete in this ressource."))
             }
 
             // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
@@ -107,6 +107,7 @@ export abstract class CRUDController<T, C, W> {
     abstract findAll(): PrismaPromise<Partial<T>[]>;
     abstract readAllowed(tokenId: number): Promise<boolean>;
     abstract writeAllowed(tokenId: number): Promise<boolean>;
+    abstract deleteAllowed(tokenId: number): Promise<boolean>;
     abstract create(data: C): Promise<void>;
     abstract upsert(where: W, data: C): Promise<void>;
     abstract delete(where: W): Promise<void>;

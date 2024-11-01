@@ -28,14 +28,17 @@ model Permission {
   token   Token @relation(fields: [tokenId], references: [id])
   tokenId Int   @unique
 
-  readShops  Boolean @default(true)
-  writeShops Boolean @default(false)
+  readShops   Boolean @default(true)
+  writeShops  Boolean @default(false)
+  deleteShops Boolean @default(false)
 
-  readOffers  Boolean @default(true)
-  writeOffers Boolean @default(false)
+  readOffers   Boolean @default(true)
+  writeOffers  Boolean @default(false)
+  deleteOffers Boolean @default(false)
 
-  readAuctions  Boolean @default(true)
-  writeAuctions Boolean @default(false)
+  readAuctions   Boolean @default(true)
+  writeAuctions  Boolean @default(false)
+  deleteAuctions Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -61,7 +64,7 @@ model Shop {
 model Offer {
   id Int @id @default(autoincrement())
 
-  shop      String  @db.VarChar(255)
+  shop      String  @db.VarChar(255) // this is legacy and should be replaced with a true relation to shop
   x         Int
   y         Int
   z         Int

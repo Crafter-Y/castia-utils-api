@@ -6,9 +6,14 @@ import { getPermissions } from '../helpers';
 const prisma = new PrismaClient()
 
 class ShopRoutes extends CRUDController<Shop, Prisma.ShopCreateInput, Prisma.ShopWhereUniqueInput> {
-    async delete(where: Prisma.ShopWhereUniqueInput): Promise<void> {
+    async delete(where: { name: string }): Promise<void> {
         await prisma.shop.delete({
             where
+        })
+        await prisma.offer.deleteMany({
+            where: {
+                shop: where.name
+            }
         })
     }
     async upsert(where: Prisma.ShopWhereUniqueInput, data: Prisma.ShopCreateInput): Promise<void> {
@@ -28,6 +33,10 @@ class ShopRoutes extends CRUDController<Shop, Prisma.ShopCreateInput, Prisma.Sho
     async writeAllowed(tokenId: number): Promise<boolean> {
         const res = await getPermissions(tokenId);
         return res.writeShops;
+    }
+    async deleteAllowed(tokenId: number): Promise<boolean> {
+        const res = await getPermissions(tokenId);
+        return res.deleteShops;
     }
 
     findAll() {
