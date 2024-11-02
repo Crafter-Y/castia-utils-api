@@ -2,10 +2,26 @@
 import { PrismaClient, Prisma, Shop } from '@prisma/client'
 import { CRUDController } from '../CRUDController';
 import { getPermissions } from '../helpers';
+import { z } from 'zod';
 
 const prisma = new PrismaClient()
 
 class ShopRoutes extends CRUDController<Shop, Prisma.ShopCreateInput, Prisma.ShopWhereUniqueInput> {
+    model = prisma.shop
+
+    createSchema = z.object({
+        name: z.string(),
+        command: z.string()
+    })
+
+    whereSchema = z.object({
+        id: z.number(),
+    }).or(z.object({
+        name: z.string(),
+    })).or(z.object({
+        command: z.string()
+    }))
+
     async delete(where: { name: string }): Promise<void> {
         await prisma.shop.delete({
             where
@@ -15,16 +31,6 @@ class ShopRoutes extends CRUDController<Shop, Prisma.ShopCreateInput, Prisma.Sho
                 shop: where.name
             }
         })
-    }
-    async upsert(where: Prisma.ShopWhereUniqueInput, data: Prisma.ShopCreateInput): Promise<void> {
-        await prisma.shop.upsert({
-            where,
-            update: data,
-            create: data
-        })
-    }
-    async create(data: Prisma.ShopCreateInput) {
-        await prisma.shop.create({ data })
     }
     async readAllowed(tokenId: number): Promise<boolean> {
         const res = await getPermissions(tokenId);

@@ -1,10 +1,20 @@
 import { Router, Response } from "express";
-import { ValidatedRequest } from "./validate";
+import { ValidatedRequest, validateSchema } from "./validate";
 import { error, success } from "./responses";
 import { PrismaPromise } from "@prisma/client";
+import { ModelWrapper } from "./ModelWrapper";
+import { z, ZodSchema } from "zod";
 
 export abstract class CRUDController<T, C, W> {
     router;
+
+    abstract model: ModelWrapper<C, W>
+    abstract findAll(): PrismaPromise<Partial<T>[]>;
+    abstract readAllowed(tokenId: number): Promise<boolean>;
+    abstract writeAllowed(tokenId: number): Promise<boolean>;
+    abstract deleteAllowed(tokenId: number): Promise<boolean>;
+    abstract createSchema: ZodSchema<C>
+    abstract whereSchema: ZodSchema<W>
 
     constructor() {
         this.router = Router();
@@ -28,41 +38,32 @@ export abstract class CRUDController<T, C, W> {
                 return res.json(error("You are not allowed to write to this ressource."))
             }
 
-            // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
-            const body: C | C[] = req.body;
+            const body = await validateSchema(req, z.array(this.createSchema))
+            if (body == null) return res.json(error("Schema validation failed"));
 
             const actionResult = await this.onCreate(body, req, res)
             if (!this.handleActionResult(actionResult, res)) return;
 
-            if (Array.isArray(body)) {
-                let count = body.length;
-                let failed = 0;
-                for (let i = 0; i < body.length; i++) {
-                    try {
-                        await this.internalCreate(body[i], req.tokenId!);
-                    } catch (ignored) {
-                        failed++;
-                        count--;
-                    }
-                }
-                if (count > 0) {
-                    res.json(success({
-                        succeeded: count,
-                        failed
-                    }))
-                } else {
-                    res.json(error({
-                        succeeded: count,
-                        failed
-                    }))
-                }
-            } else {
+            let count = body.length;
+            let failed = 0;
+            for (let i = 0; i < body.length; i++) {
                 try {
-                    await this.internalCreate(body, req.tokenId!);
-                    res.json(success())
+                    await this.internalCreate(body[i], req.tokenId!);
                 } catch (ignored) {
-                    res.json(error())
+                    failed++;
+                    count--;
                 }
+            }
+            if (count > 0) {
+                res.json(success({
+                    succeeded: count,
+                    failed
+                }))
+            } else {
+                res.json(error({
+                    succeeded: count,
+                    failed
+                }))
             }
             this.afterCreate(body, req.tokenId!)
         })
@@ -73,16 +74,20 @@ export abstract class CRUDController<T, C, W> {
                 return res.json(error("You are not allowed to write to this ressource."))
             }
 
-            // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
-            const { uniqueIdentifier, data }: { uniqueIdentifier: W, data: C } = req.body;
+            const body = await validateSchema(req, z.object({
+                uniqueIdentifier: this.whereSchema,
+                data: this.createSchema,
+            }));
+            if (body == null) return res.json(error("Schema validation failed"));
+            const { uniqueIdentifier, data } = body;
 
-            const actionResult = await this.onUpsert(uniqueIdentifier, data, req, res)
+            const actionResult = await this.onUpsert(uniqueIdentifier!, data!, req, res)
             if (!this.handleActionResult(actionResult, res)) return;
 
-            await this.upsert(uniqueIdentifier, { ...data, createdBy: undefined, createdById: req.tokenId! })
+            await this.upsert(uniqueIdentifier!, { ...data!, createdBy: undefined, createdById: req.tokenId! })
 
             res.json(success())
-            this.afterUpsert(uniqueIdentifier, data, req.tokenId!)
+            this.afterUpsert(uniqueIdentifier!, data!, req.tokenId!)
         })
 
         // delete
@@ -91,26 +96,39 @@ export abstract class CRUDController<T, C, W> {
                 return res.json(error("You are not allowed to delete in this ressource."))
             }
 
-            // TODO: add input validation. rn I just assume the input is in the correct format (what could go wrong :D)
-            const { uniqueIdentifier }: { uniqueIdentifier: W } = req.body;
+            const body = await validateSchema(req, z.object({
+                uniqueIdentifier: this.whereSchema,
+            }));
+            if (body == null) return res.json(error("Schema validation failed"));
+            const { uniqueIdentifier } = body;
 
-            const actionResult = await this.onDelete(uniqueIdentifier, req, res);
+            const actionResult = await this.onDelete(uniqueIdentifier!, req, res);
             if (!this.handleActionResult(actionResult, res)) return;
 
-            await this.delete(uniqueIdentifier)
+            await this.delete(uniqueIdentifier!)
 
             res.json(success())
-            this.afterDelete(uniqueIdentifier, req.tokenId!)
+            this.afterDelete(uniqueIdentifier!, req.tokenId!)
         })
     }
 
-    abstract findAll(): PrismaPromise<Partial<T>[]>;
-    abstract readAllowed(tokenId: number): Promise<boolean>;
-    abstract writeAllowed(tokenId: number): Promise<boolean>;
-    abstract deleteAllowed(tokenId: number): Promise<boolean>;
-    abstract create(data: C): Promise<void>;
-    abstract upsert(where: W, data: C): Promise<void>;
-    abstract delete(where: W): Promise<void>;
+    // ------ Default implementation ---------
+
+    async create(data: C): Promise<void> {
+        await this.model.create({ data });
+    }
+    async upsert(where: W, data: C): Promise<void> {
+        await this.model.upsert({
+            where,
+            update: data,
+            create: data
+        })
+    }
+    async delete(where: W): Promise<void> {
+        await this.model.delete({
+            where
+        })
+    }
 
     async onRead(req: ValidatedRequest, res: Response): Promise<ActionResult> {
         return ActionResult.PASS;

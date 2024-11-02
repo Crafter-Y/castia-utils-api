@@ -4,29 +4,42 @@ import { ActionResult, CRUDController, ResultType } from '../CRUDController';
 import { getPermissions } from '../helpers';
 import { ValidatedRequest } from '../validate';
 import { Response } from "express"
-import { error, success } from '../responses';
+import { success } from '../responses';
+import { z } from 'zod';
 
 const prisma = new PrismaClient()
 
 class OfferRoutes extends CRUDController<Offer, Prisma.OfferCreateInput, Prisma.OfferWhereUniqueInput> {
+    model = prisma.offer
+
+    createSchema = z.object({
+        shop: z.string(),
+        x: z.number(),
+        y: z.number(),
+        z: z.number(),
+        owner: z.string(),
+        item: z.string(),
+        display: z.string(),
+        buyPrice: z.number(),
+        sellPrice: z.number(),
+        empty: z.boolean().optional(),
+        full: z.boolean().optional()
+    })
+
+    whereSchema = z.object({
+        x_y_z: z
+            .object({
+                x: z.number(),
+                y: z.number(),
+                z: z.number()
+            })
+    }).or(z.object({
+        id: z.number(),
+    }))
+
     async deleteAllowed(tokenId: number): Promise<boolean> {
         const res = await getPermissions(tokenId);
         return res.deleteOffers;
-    }
-    async delete(where: Prisma.OfferWhereUniqueInput): Promise<void> {
-        await prisma.offer.delete({
-            where
-        })
-    }
-    async upsert(where: Prisma.OfferWhereUniqueInput, data: Prisma.OfferCreateInput): Promise<void> {
-        await prisma.offer.upsert({
-            where,
-            update: data,
-            create: data
-        })
-    }
-    async create(data: Prisma.OfferCreateInput) {
-        await prisma.offer.create({ data })
     }
     async readAllowed(tokenId: number): Promise<boolean> {
         const res = await getPermissions(tokenId);
