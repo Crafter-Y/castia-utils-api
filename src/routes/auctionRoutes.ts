@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 
 router.put("/", async (req: ValidatedRequest, res) => {
     const perms = await getPermissions(req.tokenId!);
-    if (!perms.writeAuctions) return res.json(error("You don't have the permission to write to this ressource."))
+    if (!perms.writeAuctions) return res.json(error("You don't have the permission to write to this resource."))
 
     const data: { item: string, price: number, amount: number }[] = req.body
 

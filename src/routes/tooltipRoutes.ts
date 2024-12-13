@@ -66,7 +66,7 @@ const calculateMedValues = (nums: number[]) => {
 
 router.get("/", async (req: ValidatedRequest, res) => {
     const perms = await getPermissions(req.tokenId!);
-    if (!perms.readAuctions || !perms.readOffers) return res.json(error("You need auction and read permissions to acces this ressource."))
+    if (!perms.readAuctions || !perms.readOffers) return res.json(error("You need auction and read permissions to acces this resource."))
 
     const requestedItemData: string[] = req.body;
 

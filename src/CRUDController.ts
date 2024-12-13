@@ -22,7 +22,7 @@ export abstract class CRUDController<T, C, W> {
         // get all
         this.router.get("/", async (req: ValidatedRequest, res) => {
             if (!await this.readAllowed(req.tokenId!)) {
-                return res.json(error("You are not allowed to read this ressource."))
+                return res.json(error("You are not allowed to read this resource."))
             }
 
             const actionResult = await this.onRead(req, res)
@@ -35,7 +35,7 @@ export abstract class CRUDController<T, C, W> {
         // create
         this.router.put("/", async (req: ValidatedRequest, res) => {
             if (!await this.writeAllowed(req.tokenId!)) {
-                return res.json(error("You are not allowed to write to this ressource."))
+                return res.json(error("You are not allowed to write to this resource."))
             }
 
             const body = await validateSchema(req, z.array(this.createSchema))
@@ -71,7 +71,7 @@ export abstract class CRUDController<T, C, W> {
         // update/create (upsert)
         this.router.post("/", async (req: ValidatedRequest, res) => {
             if (!await this.writeAllowed(req.tokenId!)) {
-                return res.json(error("You are not allowed to write to this ressource."))
+                return res.json(error("You are not allowed to write to this resource."))
             }
 
             const body = await validateSchema(req, z.object({
@@ -93,7 +93,7 @@ export abstract class CRUDController<T, C, W> {
         // delete
         this.router.delete("/", async (req: ValidatedRequest, res) => {
             if (!await this.deleteAllowed(req.tokenId!)) {
-                return res.json(error("You are not allowed to delete in this ressource."))
+                return res.json(error("You are not allowed to delete in this resource."))
             }
 
             const body = await validateSchema(req, z.object({
